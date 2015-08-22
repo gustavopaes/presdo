@@ -47,15 +47,15 @@ type Page struct {
 
 // Basic website information
 var websiteConfig struct {
-    Domain      string
-    PortNumber  int
-    PublicDir   string
-    TemplateDir string
-    DateFormat  string
-    Ext         string
-    Encode      string
-    NotFound    string
-    CacheConfig cacheTimes
+    Domain       string
+    PortNumber   int
+    PublicDir    string
+    TemplateDir  string
+    DateFormat   string
+    Ext          string
+    Encode       string
+    NotFound     string
+    IsProduction bool
 }
 
 // Read config file and start server
@@ -180,11 +180,11 @@ func responseMarkdownFile(w http.ResponseWriter, r *http.Request) error {
         return err
     }
 
-    var cachedStat os.FileInfo
-    var errStat error
+    cachedStat, errStat := os.Stat(cachedPath)
 
-    // if not exist cached file, parse markdown content and create HTML file synchronous
-    if cachedStat, errStat = os.Stat(cachedPath); errStat != nil {
+    // Development mode always parse markdown file.
+    // if not exist cached file, parse markdown content and create HTML file synchronous.
+    if websiteConfig.IsProduction == false || errStat != nil {
         markdown.Parse(requestFilePath, markdownPath)
         cachedStat, _ = os.Stat(cachedPath)
     }
