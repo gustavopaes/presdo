@@ -18,7 +18,9 @@ var markdown MarkdownStruct = MarkdownStruct{}
 func (md *MarkdownStruct) Parse(requestFilePath string, markdownPath string) template.HTML {
     markdownContent, _ := ioutil.ReadFile(markdownPath)
 
-    var pageContent Page
+    var pageContent Page = Page{
+        Layout: "post",
+    }
 
     // Get all header fields
     extractHeader(markdownContent, &pageContent)
