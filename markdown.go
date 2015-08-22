@@ -6,6 +6,7 @@ import (
   "github.com/russross/blackfriday"
   "io/ioutil"
   "log"
+  "path/filepath"
   "os"
   "time"
 )
@@ -32,29 +33,36 @@ func (md *MarkdownStruct) Parse(requestFilePath string, markdownPath string) tem
 // configure markdown render options
 // See blackfriday markdown source for details
 func render(content []byte) template.HTML {
-  htmlFlags := 0
-  //htmlFlags |= blackfriday.HTML_SKIP_SCRIPT
-  htmlFlags |= blackfriday.HTML_USE_XHTML
-  htmlFlags |= blackfriday.HTML_USE_SMARTYPANTS
-  htmlFlags |= blackfriday.HTML_SMARTYPANTS_FRACTIONS
-  htmlFlags |= blackfriday.HTML_SMARTYPANTS_LATEX_DASHES
-  renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
+    htmlFlags := 0
+    //htmlFlags |= blackfriday.HTML_SKIP_SCRIPT
+    htmlFlags |= blackfriday.HTML_USE_XHTML
+    htmlFlags |= blackfriday.HTML_USE_SMARTYPANTS
+    htmlFlags |= blackfriday.HTML_SMARTYPANTS_FRACTIONS
+    htmlFlags |= blackfriday.HTML_SMARTYPANTS_LATEX_DASHES
+    renderer := blackfriday.HtmlRenderer(htmlFlags, "", "")
 
-  extensions := 0
-  extensions |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
-  extensions |= blackfriday.EXTENSION_TABLES
-  extensions |= blackfriday.EXTENSION_FENCED_CODE
-  extensions |= blackfriday.EXTENSION_AUTOLINK
-  extensions |= blackfriday.EXTENSION_STRIKETHROUGH
-  extensions |= blackfriday.EXTENSION_SPACE_HEADERS
+    extensions := 0
+    extensions |= blackfriday.EXTENSION_NO_INTRA_EMPHASIS
+    extensions |= blackfriday.EXTENSION_TABLES
+    extensions |= blackfriday.EXTENSION_FENCED_CODE
+    extensions |= blackfriday.EXTENSION_AUTOLINK
+    extensions |= blackfriday.EXTENSION_STRIKETHROUGH
+    extensions |= blackfriday.EXTENSION_SPACE_HEADERS
 
-  return template.HTML(blackfriday.Markdown([]byte(content), renderer, extensions))
+    return template.HTML(blackfriday.Markdown([]byte(content), renderer, extensions))
 }
 
 func save(requestFilePath string, markdownPath string, parsedMarkdown template.HTML) {
     cachedPath := paths.Cache(requestFilePath)
+    cachedFolder := filepath.Dir(cachedPath)
 
-    if err := ioutil.WriteFile(cachedPath, []byte(parsedMarkdown), 0644); err != nil {
+    // check if full path file exists
+    if _, err := os.Stat(cachedFolder); os.IsNotExist(err) {
+        // create full path
+        os.MkdirAll(cachedFolder, 0755)
+    }
+
+    if err := ioutil.WriteFile(cachedPath, []byte(parsedMarkdown), 0664); err != nil {
         log.Println("Error on create markdown cache file: ", err)
     } else {
         if markdownStat, err := os.Stat(markdownPath); err == nil {
