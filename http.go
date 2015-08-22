@@ -2,6 +2,8 @@ package presdo
 
 import (
     "net/http"
+    "path/filepath"
+    "mime"
     "fmt"
     "time"
     "log"
@@ -52,6 +54,10 @@ func (s *ServerStruct) Static(w http.ResponseWriter, r *http.Request, fileStat F
 
 // Send content response
 func (s *ServerStruct) Content(w http.ResponseWriter, r *http.Request, filePath string, modTime time.Time) {
+    ext := filepath.Ext(filePath)
+
+    // define headers to send to client
+    w.Header().Add("Content-Type", mime.TypeByExtension(ext) + "; charset=" + websiteConfig.Encode)
 
     if fileContent, err := os.Open(filePath); err == nil {
         LogResponse(w, r)
