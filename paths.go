@@ -29,6 +29,10 @@ func (p *PathStruct) Markdown(requestPath string) string {
     return path.Join("markdown", strings.Replace(requestPath, path.Ext(requestPath), ".md", 1))
 }
 
+func (p *PathStruct) Index(requestPath string) string {
+    return path.Join("markdown", strings.Replace(requestPath, "index" + websiteConfig.Ext, "", 1), "presdo.index")
+}
+
 // Concat cache directory with request path
 func (p *PathStruct) Cache(requestPath string) string {
     return path.Join("cache", requestPath)

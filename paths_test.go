@@ -5,6 +5,39 @@ import (
     "path"
 )
 
+func TestPathIndexConfig(t *testing.T) {
+    var expect, result, test string
+
+    setDefaultValues()
+
+    test = "/"
+    expect = "markdown/presdo.index"
+
+    if result = paths.Index(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+    test = "/index" + websiteConfig.Ext
+    expect = "markdown/presdo.index"
+
+    if result = paths.Index(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+    test = "/foo"
+    expect = "markdown/foo/presdo.index"
+
+    if result = paths.Index(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+    test = "/foo/index" + websiteConfig.Ext
+    expect = "markdown/foo/presdo.index"
+
+    if result = paths.Index(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+}
 
 func TestPathPublic(t *testing.T) {
     var expect, result, test string
