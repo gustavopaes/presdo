@@ -54,7 +54,7 @@ func (s *ServerStruct) request(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *ServerStruct) NotFound(w http.ResponseWriter, r *http.Request) {
-    http.Redirect(w, r, websiteConfig.NotFound, 302)
+    http.Redirect(w, r, "/" + websiteConfig.NotFound, 302)
 }
 
 // Send to client some static file
