@@ -12,11 +12,15 @@ package presdo
 import (
     "log"
     "os"
+    "path/filepath"
     "io/ioutil"
     "encoding/json"
     "time"
     "net/http"
     "html/template"
+    "strings"
+    "errors"
+    "sort"
 )
 
 const VERSION = "0.0.1"
@@ -38,11 +42,39 @@ type cacheTimes struct {
 
 // Page struct.
 type Page struct {
-  Title, Category, Layout, Url string
-  Content                      template.HTML
-  Date                         time.Time
-  Updated                      time.Time
-  Params                       map[string]string
+    Title, Category, Layout, Url string
+    Content                      template.HTML
+    Date                         time.Time
+    Updated                      time.Time
+    Params                       map[string]string
+}
+
+// Index struct.
+type Index struct {
+    Title, Category, Layout, Url string
+    Params map[string]string
+    Pages  []Page
+}
+
+// Page Methods
+func (p *Page) HTML() template.HTML {
+    return view.HTML(p.Layout, p)
+}
+
+// Index Methods
+func (index *Index) HTML() template.HTML {
+    return view.HTML(index.Layout, index)
+}
+
+// Sort Index
+type IndexByDate []Page
+
+func (a IndexByDate) Len() int           { return len(a) }
+func (a IndexByDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a IndexByDate) Less(i, j int) bool { return a[i].Date.Unix() > a[j].Date.Unix() }
+
+func (index *Index) Sort() {
+    sort.Sort(IndexByDate(index.Pages))
 }
 
 // Basic website information
@@ -196,5 +228,52 @@ func responseMarkdownFile(w http.ResponseWriter, r *http.Request) error {
     return nil
 }
 
+func readDirListAndAppend(dir string) []string {
+  var files []string
 
+  dirlist, _ := ioutil.ReadDir(dir)
+  for _, fi := range dirlist {
+    f := filepath.Join(dir, fi.Name())
+    ext := filepath.Ext(f)
+
+    if ext == ".html" || ext == ".md" {
+      files = append(files, f)
+    } else {
+      // recursively
+      files = append(files, readDirListAndAppend(f)...)
+    }
+  }
+
+  return files
+}
+
+// Look for index config file
+func responseIndexFile(w http.ResponseWriter, r *http.Request) error {
+    requestFilePath := paths.Request(r.RequestURI)
+
+    // check if is index path
+    if strings.Contains(requestFilePath, "index" + websiteConfig.Ext) {
+        if _, err := os.Stat( paths.Index(r.RequestURI) ); err == nil {
+            files := readDirListAndAppend( paths.IndexPath(r.RequestURI) )
+
+            index := Index{
+                Layout: "category",
+            }
+
+            for _, markdownPath := range files {
+                page, _ := markdown.PageInfo(markdownPath)
+                page.Url = paths.Page(markdownPath)
+                index.Pages = append(index.Pages, page)
+            }
+
+            index.Sort()
+
+            w.Write([]byte( index.HTML() ))
+
+            return nil
+        }
+    }
+
+    return errors.New("file does not exist")
+}
 

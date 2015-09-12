@@ -39,6 +39,41 @@ func TestPathIndexConfig(t *testing.T) {
     }
 }
 
+
+func TestPathIndexPath(t *testing.T) {
+    var expect, result, test string
+
+    setDefaultValues()
+
+    test = "/"
+    expect = "markdown"
+
+    if result = paths.IndexPath(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+    test = "/index" + websiteConfig.Ext
+    expect = "markdown"
+
+    if result = paths.IndexPath(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+    test = "/foo"
+    expect = "markdown/foo"
+
+    if result = paths.IndexPath(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+    test = "/foo/index" + websiteConfig.Ext
+    expect = "markdown/foo"
+
+    if result = paths.IndexPath(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+}
+
 func TestPathPublic(t *testing.T) {
     var expect, result, test string
 
@@ -177,6 +212,27 @@ func TestPathRequest(t *testing.T) {
     expect = "foo/bar/img.gif"
 
     if result = paths.Request(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+}
+
+func TestPathPage(t *testing.T) {
+    var expect, result, test string
+
+    setDefaultValues()
+
+    test = "markdown/foo.md"
+    expect = "foo" + websiteConfig.Ext
+
+    if result = paths.Page(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
+
+
+    test = "markdown/foo/bar.md"
+    expect = "foo/bar" + websiteConfig.Ext
+
+    if result = paths.Page(test); expect != result {
         t.Errorf("Path need to be %s, return %s", expect, result )
     }
 }

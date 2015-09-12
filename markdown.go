@@ -16,20 +16,26 @@ type MarkdownStruct struct { }
 var markdown MarkdownStruct = MarkdownStruct{}
 
 func (md *MarkdownStruct) Parse(requestFilePath string, markdownPath string) template.HTML {
+    page, content := markdown.PageInfo(markdownPath)
+    page.Content = render([]byte(content))
+
+    pageHtml := page.HTML()
+
+    save(requestFilePath, markdownPath, pageHtml)
+
+    return pageHtml
+}
+
+func (md *MarkdownStruct) PageInfo(markdownPath string) (Page, string) {
     markdownContent, _ := ioutil.ReadFile(markdownPath)
 
     var pageContent Page = Page{
         Layout: "post",
     }
 
-    // Get all header fields
-    extractHeader(markdownContent, &pageContent)
+    content := extractHeader(markdownContent, &pageContent)
 
-    pageHtml := view.HTML(&pageContent)
-
-    save(requestFilePath, markdownPath, pageHtml)
-
-    return pageHtml
+    return pageContent, content
 }
 
 // configure markdown render options
@@ -73,7 +79,7 @@ func save(requestFilePath string, markdownPath string, parsedMarkdown template.H
     }
 }
 
-func extractHeader(markdownContent []byte, page *Page) {
+func extractHeader(markdownContent []byte, page *Page) string {
     page.Params = make(map[string]string)
 
     var lines = strings.Split(string(markdownContent), "\n")
@@ -112,6 +118,6 @@ func extractHeader(markdownContent []byte, page *Page) {
     }
 
     // convert markdown content
-    content := strings.Join(lines, "\n")
-    page.Content = render([]byte(content))
+    //content := strings.Join(lines, "\n")
+    return strings.Join(lines, "\n")
 }

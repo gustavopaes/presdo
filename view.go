@@ -16,12 +16,12 @@ var view ViewStruct = ViewStruct{}
 
 func (v *ViewStruct) Init() {
     funcMap := template.FuncMap{
-        "isPost": func (page Page) bool {
-          return page.Layout == "post"
+        "isPost": func (layout string) bool {
+          return layout == "post"
         },
 
-        "isCategory": func (page Page) bool {
-          return page.Layout == "category"
+        "isCategory": func (layout string) bool {
+          return layout == "category"
         },
     }
 
@@ -33,9 +33,9 @@ func (v *ViewStruct) Init() {
     }
 }
 
-func (v *ViewStruct) HTML(page *Page) template.HTML {
+func (v *ViewStruct) HTML(layout string, page interface{}) template.HTML {
     buffer := new(bytes.Buffer)
-    ts.ExecuteTemplate(buffer, page.Layout + ".html", page)
+    ts.ExecuteTemplate(buffer, layout + ".html", page)
 
     return template.HTML(buffer.String())
 }

@@ -44,9 +44,10 @@ func (s *ServerStruct) request(w http.ResponseWriter, r *http.Request) {
             s.NotFound(w, r)
         } else {
             // it is not an static file, look for markdown content
-            err := responseMarkdownFile(w, r)
+            errMarkdown := responseMarkdownFile(w, r)
+            errIndex    := responseIndexFile(w, r)
 
-            if os.IsNotExist(err) {
+            if os.IsNotExist(errMarkdown) && os.IsNotExist(errIndex) {
                 s.NotFound(w, r)
             }
         }
