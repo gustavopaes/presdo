@@ -12,25 +12,18 @@ type MarkdownStruct struct { }
 
 var markdown MarkdownStruct = MarkdownStruct{}
 
-func (md *MarkdownStruct) ParseHTML(requestFilePath string, markdownPath string) template.HTML {
-    page, content := markdown.PageInfo(markdownPath)
-    page.Content = render([]byte(content))
-
-    pageHtml := page.HTML()
-
-    return pageHtml
-}
-
-func (md *MarkdownStruct) PageInfo(markdownPath string) (Page, string) {
+func (md *MarkdownStruct) PageInfo(markdownPath string) Page {
     markdownContent, _ := ioutil.ReadFile(markdownPath)
 
-    var pageContent Page = Page{
+    var pageInfo Page = Page{
         Layout: "post",
     }
 
-    content := extractHeader(markdownContent, &pageContent)
+    content := extractHeader(markdownContent, &pageInfo)
 
-    return pageContent, content
+    pageInfo.Content = render([]byte(content))
+
+    return pageInfo
 }
 
 // configure markdown render options
@@ -79,13 +72,13 @@ func extractHeader(markdownContent []byte, page *Page) string {
                         page.Index = true
                     }
                     case "title":
-                    page.Title = value
+                    page.Title = strings.TrimSpace(value)
                     case "layout":
-                    page.Layout = value
+                    page.Layout = strings.TrimSpace(value)
                     case "date":
                     page.Date, _ = time.Parse(websiteConfig.DateFormat, value)
                     default:
-                    page.Params[key] = value
+                    page.Params[key] = strings.TrimSpace(value)
                 }
             }
         } else if found >= 2 {

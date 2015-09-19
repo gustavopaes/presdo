@@ -20,7 +20,7 @@ func (s *ServerStruct) Run() {
 
     domainAndPort := fmt.Sprintf("%s:%d", websiteConfig.Domain, websiteConfig.PortNumber)
     
-    fmt.Printf("   %s starting Presdo server on http://%s\n", time.Now(), domainAndPort)
+    LogAction("starting Presdo server on http://" + domainAndPort)
     log.Fatal(http.ListenAndServe(domainAndPort, nil))
 }
 

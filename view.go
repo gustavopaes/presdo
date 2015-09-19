@@ -28,12 +28,13 @@ func (v *ViewStruct) Init() {
     var err error
 
     ts = template.New("")
+    LogAction("reading templates on " + websiteConfig.TemplateDir)
     if ts, err = ts.Funcs(funcMap).ParseGlob(websiteConfig.TemplateDir + "*.html"); err != nil {
         log.Fatalln("Template error:\n", err)
     }
 }
 
-func (v *ViewStruct) HTML(layout string, page interface{}) template.HTML {
+func (v *ViewStruct) HTML(layout string, page *Page) template.HTML {
     buffer := new(bytes.Buffer)
     ts.ExecuteTemplate(buffer, layout + ".html", page)
 

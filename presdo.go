@@ -32,18 +32,12 @@ type FileInfo struct {
 // Page struct.
 type Page struct {
     Title, Category, Layout, Url string
-    Index                        bool
     Content                      template.HTML
     Date                         time.Time
     Updated                      time.Time
     Params                       map[string]string
-}
-
-// Index struct.
-type Index struct {
-    Title, Category, Layout, Url string
-    Params map[string]string
-    Pages  []Page
+    Index                        bool
+    IndexPages                   []Page
 }
 
 // Page Methods
@@ -51,20 +45,31 @@ func (p *Page) HTML() template.HTML {
     return view.HTML(p.Layout, p)
 }
 
-// Index Methods
-func (index *Index) HTML() template.HTML {
-    return view.HTML(index.Layout, index)
-}
+// Sort Index By Date
+type IndexByDateAsc []Page
+func (a IndexByDateAsc) Len() int           { return len(a) }
+func (a IndexByDateAsc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a IndexByDateAsc) Less(i, j int) bool { return a[i].Date.Unix() < a[j].Date.Unix() }
 
-// Sort Index
-type IndexByDate []Page
+type IndexByDateDesc []Page
+func (a IndexByDateDesc) Len() int           { return len(a) }
+func (a IndexByDateDesc) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a IndexByDateDesc) Less(i, j int) bool { return a[i].Date.Unix() > a[j].Date.Unix() }
 
-func (a IndexByDate) Len() int           { return len(a) }
-func (a IndexByDate) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a IndexByDate) Less(i, j int) bool { return a[i].Date.Unix() > a[j].Date.Unix() }
+// Sort Index By Title
+type IndexByTitle []Page
+func (a IndexByTitle) Len() int           { return len(a) }
+func (a IndexByTitle) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a IndexByTitle) Less(i, j int) bool { return a[i].Title < a[j].Title }
 
-func (index *Index) Sort() {
-    sort.Sort(IndexByDate(index.Pages))
+func (page *Page) Sort() {
+    switch page.Params["sort"] {
+    case "title":
+        sort.Sort(IndexByTitle(page.IndexPages))
+
+    default:
+        sort.Sort(IndexByDateDesc(page.IndexPages))
+    }
 }
 
 // Basic website information
@@ -190,9 +195,13 @@ func responseMarkdownFile(w http.ResponseWriter, r *http.Request) error {
         return err
     }
 
-    pageHtml := markdown.ParseHTML(requestFilePath, markdownPath)
+    page := markdown.PageInfo(markdownPath)
 
-    server.Content(w, r, pageHtml, markdownStat.ModTime())
+    if page.Index {
+        getIndexFiles(&page, r.RequestURI)
+    }
+
+    server.Content(w, r, page.HTML(), markdownStat.ModTime())
 
     return nil
 }
@@ -202,6 +211,10 @@ func readDirListAndAppend(dir string) []string {
 
   dirlist, _ := ioutil.ReadDir(dir)
   for _, fi := range dirlist {
+    if fi.Name() == "index.md" {
+        continue
+    }
+
     f := filepath.Join(dir, fi.Name())
     ext := filepath.Ext(f)
 
@@ -217,24 +230,16 @@ func readDirListAndAppend(dir string) []string {
 }
 
 // Look for index config file
-func responseIndexFile(w http.ResponseWriter, r *http.Request) error {
+func getIndexFiles(page *Page, requestURI string) {
     // check if is index path
-    files := readDirListAndAppend( paths.IndexPath(r.RequestURI) )
-
-    index := Index{
-        Layout: "category",
-    }
+    files := readDirListAndAppend( paths.IndexPath(requestURI) )
 
     for _, markdownPath := range files {
-        page, _ := markdown.PageInfo(markdownPath)
-        page.Url = paths.Page(markdownPath)
-        index.Pages = append(index.Pages, page)
+        relatedPage := markdown.PageInfo(markdownPath)
+        relatedPage.Url = paths.Page(markdownPath)
+        page.IndexPages = append(page.IndexPages, relatedPage)
     }
 
-    index.Sort()
-
-    w.Write([]byte( index.HTML() ))
-
-    return nil
+    page.Sort()
 }
 
