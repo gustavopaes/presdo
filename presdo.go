@@ -18,8 +18,6 @@ import (
     "time"
     "net/http"
     "html/template"
-    "strings"
-    "errors"
     "sort"
 )
 
@@ -43,6 +41,7 @@ type cacheTimes struct {
 // Page struct.
 type Page struct {
     Title, Category, Layout, Url string
+    Index                        bool
     Content                      template.HTML
     Date                         time.Time
     Updated                      time.Time
@@ -249,31 +248,23 @@ func readDirListAndAppend(dir string) []string {
 
 // Look for index config file
 func responseIndexFile(w http.ResponseWriter, r *http.Request) error {
-    requestFilePath := paths.Request(r.RequestURI)
-
     // check if is index path
-    if strings.Contains(requestFilePath, "index" + websiteConfig.Ext) {
-        if _, err := os.Stat( paths.Index(r.RequestURI) ); err == nil {
-            files := readDirListAndAppend( paths.IndexPath(r.RequestURI) )
+    files := readDirListAndAppend( paths.IndexPath(r.RequestURI) )
 
-            index := Index{
-                Layout: "category",
-            }
-
-            for _, markdownPath := range files {
-                page, _ := markdown.PageInfo(markdownPath)
-                page.Url = paths.Page(markdownPath)
-                index.Pages = append(index.Pages, page)
-            }
-
-            index.Sort()
-
-            w.Write([]byte( index.HTML() ))
-
-            return nil
-        }
+    index := Index{
+        Layout: "category",
     }
 
-    return errors.New("file does not exist")
+    for _, markdownPath := range files {
+        page, _ := markdown.PageInfo(markdownPath)
+        page.Url = paths.Page(markdownPath)
+        index.Pages = append(index.Pages, page)
+    }
+
+    index.Sort()
+
+    w.Write([]byte( index.HTML() ))
+
+    return nil
 }
 

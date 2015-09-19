@@ -96,6 +96,12 @@ func extractHeader(markdownContent []byte, page *Page) string {
                 value := strings.TrimSpace(line[colonIndex+1:])
                 value = strings.Trim(value, "\"") //remove quotes
                 switch key {
+                    case "index":
+                    page.Index = false
+
+                    if value == "true" {
+                        page.Index = true
+                    }
                     case "title":
                     page.Title = value
                     case "layout":
