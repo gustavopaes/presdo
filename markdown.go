@@ -71,6 +71,8 @@ func extractHeader(markdownContent []byte, page *Page) string {
                     if value == "true" {
                         page.Index = true
                     }
+                    case "indexSort":
+                    page.IndexSort = strings.TrimSpace(value)
                     case "title":
                     page.Title = strings.TrimSpace(value)
                     case "layout":

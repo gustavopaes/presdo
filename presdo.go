@@ -38,6 +38,7 @@ type Page struct {
     Params                       map[string]string
     Index                        bool
     IndexPages                   []Page
+    IndexSort                    string
 }
 
 // Page Methods
@@ -63,7 +64,7 @@ func (a IndexByTitle) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a IndexByTitle) Less(i, j int) bool { return a[i].Title < a[j].Title }
 
 func (page *Page) Sort() {
-    switch page.Params["sort"] {
+    switch page.IndexSort {
     case "title":
         sort.Sort(IndexByTitle(page.IndexPages))
 
