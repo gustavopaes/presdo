@@ -29,7 +29,7 @@ func (p *PathStruct) Page(markdownPath string) string {
     url = strings.Replace(url, "markdown/", "", 1)
     url = strings.Replace(url, ".md", websiteConfig.Ext, 1)
 
-    return url
+    return "/" + url
 }
 
 // Concat markdown directory with request path
