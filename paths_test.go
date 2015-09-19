@@ -81,31 +81,6 @@ func TestPathPublic(t *testing.T) {
     }
 }
 
-
-func TestPathCache(t *testing.T) {
-    var expect, result, test string
-
-    setDefaultValues()
-
-    // Test "/index.htm"
-    // Need to be "cache/index.htm"
-    test = "/index.htm"
-    expect = "cache/index.htm"
-
-    if result = paths.Cache(test); expect != result {
-        t.Errorf("Path need to be %s, return %s", expect, result )
-    }
-
-    // Test "/foo/bar.html"
-    // Need to be "cache/foo/bar.html"
-    test = "/foo/bar.html"
-    expect = "cache/foo/bar.html"
-
-    if result = paths.Cache(test); expect != result {
-        t.Errorf("Path need to be %s, return %s", expect, result )
-    }
-}
-
 func TestPathMarkdown(t *testing.T) {
     var expect, result, test string
 
@@ -187,7 +162,7 @@ func TestPathPage(t *testing.T) {
     setDefaultValues()
 
     test = "markdown/foo.md"
-    expect = "foo" + websiteConfig.Ext
+    expect = "/foo" + websiteConfig.Ext
 
     if result = paths.Page(test); expect != result {
         t.Errorf("Path need to be %s, return %s", expect, result )
@@ -195,7 +170,7 @@ func TestPathPage(t *testing.T) {
 
 
     test = "markdown/foo/bar.md"
-    expect = "foo/bar" + websiteConfig.Ext
+    expect = "/foo/bar" + websiteConfig.Ext
 
     if result = paths.Page(test); expect != result {
         t.Errorf("Path need to be %s, return %s", expect, result )

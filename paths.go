@@ -44,8 +44,3 @@ func (p *PathStruct) Index(requestPath string) string {
 func (p *PathStruct) IndexPath(requestPath string) string {
     return path.Join("markdown", strings.Replace(requestPath, "index" + websiteConfig.Ext, "", 1))
 }
-
-// Concat cache directory with request path
-func (p *PathStruct) Cache(requestPath string) string {
-    return path.Join("cache", requestPath)
-}

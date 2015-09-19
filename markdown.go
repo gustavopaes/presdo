@@ -5,9 +5,6 @@ import (
   "html/template"
   "github.com/russross/blackfriday"
   "io/ioutil"
-  "log"
-  "path/filepath"
-  "os"
   "time"
 )
 
@@ -15,13 +12,11 @@ type MarkdownStruct struct { }
 
 var markdown MarkdownStruct = MarkdownStruct{}
 
-func (md *MarkdownStruct) Parse(requestFilePath string, markdownPath string) template.HTML {
+func (md *MarkdownStruct) ParseHTML(requestFilePath string, markdownPath string) template.HTML {
     page, content := markdown.PageInfo(markdownPath)
     page.Content = render([]byte(content))
 
     pageHtml := page.HTML()
-
-    save(requestFilePath, markdownPath, pageHtml)
 
     return pageHtml
 }
@@ -58,25 +53,6 @@ func render(content []byte) template.HTML {
     extensions |= blackfriday.EXTENSION_SPACE_HEADERS
 
     return template.HTML(blackfriday.Markdown([]byte(content), renderer, extensions))
-}
-
-func save(requestFilePath string, markdownPath string, parsedMarkdown template.HTML) {
-    cachedPath := paths.Cache(requestFilePath)
-    cachedFolder := filepath.Dir(cachedPath)
-
-    // check if full path file exists
-    if _, err := os.Stat(cachedFolder); os.IsNotExist(err) {
-        // create full path
-        os.MkdirAll(cachedFolder, 0755)
-    }
-
-    if err := ioutil.WriteFile(cachedPath, []byte(parsedMarkdown), 0664); err != nil {
-        log.Println("Error on create markdown cache file: ", err)
-    } else {
-        if markdownStat, err := os.Stat(markdownPath); err == nil {
-            os.Chtimes(cachedPath, markdownStat.ModTime(), markdownStat.ModTime())
-        }
-    }
 }
 
 func extractHeader(markdownContent []byte, page *Page) string {

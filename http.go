@@ -3,13 +3,11 @@ package presdo
 import (
     "net/http"
     "path/filepath"
-    "mime"
+    "html/template"
     "fmt"
     "time"
-    "io/ioutil"
     "log"
     "os"
-    "strings"
 )
 
 type ServerStruct struct { }
@@ -90,21 +88,17 @@ func checkLastModified(w http.ResponseWriter, r *http.Request, modtime time.Time
 }
 
 // Send content response
-func (s *ServerStruct) Content(w http.ResponseWriter, r *http.Request, filePath string, modTime time.Time) {
-    ext := filepath.Ext(filePath)
-
+func (s *ServerStruct) Content(w http.ResponseWriter, r *http.Request, pageContent template.HTML, modTime time.Time) {
     // define headers to send to client
-    w.Header().Add("Content-Type", mime.TypeByExtension(ext))
+    w.Header().Add("Content-Type", "text/html")
 
-    if fileContent, err := ioutil.ReadFile(filePath); err == nil {
-        if strings.Contains(filePath, websiteConfig.NotFound) {
-            w.WriteHeader(http.StatusNotFound)
-        }
+    //if strings.Contains(filePath, websiteConfig.NotFound) {
+    //    w.WriteHeader(http.StatusNotFound)
+    //}
 
-        checkLastModified(w, r, modTime)
+    checkLastModified(w, r, modTime)
 
-        w.Write([]byte(fileContent))
+    w.Write([]byte(pageContent))
 
-        LogResponse(w, r)
-    }
+    LogResponse(w, r)
 }

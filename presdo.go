@@ -29,15 +29,6 @@ type FileInfo struct {
     Stat     os.FileInfo
 }
 
-// Time, in days, for each content type expire. It's sent to cache-control http response.
-type cacheTimes struct {
-    Html       int
-    Css        int
-    Javascript int
-    Image      int
-    Index      int
-}
-
 // Page struct.
 type Page struct {
     Title, Category, Layout, Url string
@@ -188,41 +179,20 @@ func getRequestURIStaticFile(requestURI string) (interface{}, error) {
     }, nil
 }
 
-// Recreate cached file when markdown was changed
-func recreateCachedFileIfChanged(requestFilePath string, markdownPath string, cachedPath string) {
-    markdownStat, err1 := os.Stat(markdownPath)
-    cachedStat, err2   := os.Stat(cachedPath)
-
-    if err1 == nil && err2 == nil {
-        if cachedStat.ModTime() != markdownStat.ModTime() {
-            markdown.Parse(requestFilePath, markdownPath)
-        }
-    }
-}
-
 // Look for an markdown file
 func responseMarkdownFile(w http.ResponseWriter, r *http.Request) error {
-    requestFilePath := paths.Request(r.RequestURI)
-    cachedPath      := paths.Cache(requestFilePath)
-    markdownPath    := paths.Markdown(requestFilePath)
+    requestFilePath   := paths.Request(r.RequestURI)
+    markdownPath      := paths.Markdown(requestFilePath)
+    markdownStat, err := os.Stat(markdownPath)
 
     // if markdown not exist
-    if _, err := os.Stat(markdownPath); err != nil {
+    if err != nil {
         return err
     }
 
-    cachedStat, errStat := os.Stat(cachedPath)
+    pageHtml := markdown.ParseHTML(requestFilePath, markdownPath)
 
-    // Development mode always parse markdown file.
-    // if not exist cached file, parse markdown content and create HTML file synchronous.
-    if websiteConfig.IsProduction == false || errStat != nil {
-        markdown.Parse(requestFilePath, markdownPath)
-        cachedStat, _ = os.Stat(cachedPath)
-    }
-
-    server.Content(w, r, cachedPath, cachedStat.ModTime())
-
-    go recreateCachedFileIfChanged(requestFilePath, markdownPath, cachedPath)
+    server.Content(w, r, pageHtml, markdownStat.ModTime())
 
     return nil
 }
