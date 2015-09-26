@@ -37,6 +37,13 @@ func TestPathIndexPath(t *testing.T) {
     if result = paths.IndexPath(test); expect != result {
         t.Errorf("Path need to be %s, return %s", expect, result )
     }
+
+    test = "/baz/rss.xml"
+    expect = "markdown/baz"
+
+    if result = paths.IndexPath(test); expect != result {
+        t.Errorf("Path need to be %s, return %s", expect, result )
+    }
 }
 
 func TestPathPublic(t *testing.T) {

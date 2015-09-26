@@ -24,6 +24,7 @@ func (p *PathStruct) Request(requestPath string) string {
     return requestPath
 }
 
+// Transform markdown path in public request
 func (p *PathStruct) Page(markdownPath string) string {
     url := markdownPath
     url = strings.Replace(url, "markdown/", "", 1)
@@ -42,5 +43,9 @@ func (p *PathStruct) Index(requestPath string) string {
 }
 
 func (p *PathStruct) IndexPath(requestPath string) string {
-    return path.Join("markdown", strings.Replace(requestPath, "index" + websiteConfig.Ext, "", 1))
+    if filepath.Ext(requestPath) == "" {
+        return path.Join("markdown", requestPath)
+    } else {
+        return path.Join("markdown", path.Dir(requestPath))
+    }
 }
