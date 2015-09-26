@@ -45,7 +45,6 @@ var websiteConfig struct {
     Encode       string
     NotFound     string
     Rss          []string
-    IsProduction bool
 }
 
 // Page struct.
