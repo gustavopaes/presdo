@@ -24,6 +24,17 @@ func (s *ServerStruct) Run() {
     log.Fatal(http.ListenAndServe(domainAndPort, nil))
 }
 
+// check if is RSS request
+func isRssUrl(path string) bool {
+    for _, p := range websiteConfig.Rss {
+        if p == path {
+            return true
+        }
+    }
+
+    return false
+}
+
 // Intercept all http requests
 func (s *ServerStruct) request(w http.ResponseWriter, r *http.Request) {
     LogRequest(w, r)
@@ -37,15 +48,19 @@ func (s *ServerStruct) request(w http.ResponseWriter, r *http.Request) {
     if fileStat, err := getRequestURIStaticFile( pathRequest ); err == nil {
         s.Static(w, r, fileStat.(FileInfo))
     } else {
-        // check extention
-        if websiteConfig.Ext != filepath.Ext(pathRequest) {
-            s.NotFound(w, r)
+        if isRssUrl(pathRequest) {
+            responseRssFile(w, r);
         } else {
-            // it is not an static file, look for markdown content
-            errMarkdown := responseMarkdownFile(w, r)
-
-            if os.IsNotExist(errMarkdown) {
+            // check extention
+            if websiteConfig.Ext != filepath.Ext(pathRequest) {
                 s.NotFound(w, r)
+            } else {
+                // it is not an static file, look for markdown content
+                errMarkdown := responseMarkdownFile(w, r)
+
+                if os.IsNotExist(errMarkdown) {
+                    s.NotFound(w, r)
+                }
             }
         }
     }
@@ -95,6 +110,18 @@ func (s *ServerStruct) Content(w http.ResponseWriter, r *http.Request, pageConte
     //if strings.Contains(filePath, websiteConfig.NotFound) {
     //    w.WriteHeader(http.StatusNotFound)
     //}
+
+    checkLastModified(w, r, modTime)
+
+    w.Write([]byte(pageContent))
+
+    LogResponse(w, r)
+}
+
+// Send content response
+func (s *ServerStruct) ContentRss(w http.ResponseWriter, r *http.Request, pageContent string, modTime time.Time) {
+    // define headers to send to client
+    w.Header().Add("Content-Type", "text/xml")
 
     checkLastModified(w, r, modTime)
 

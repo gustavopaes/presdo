@@ -12,6 +12,7 @@ package presdo
 import (
     "log"
     "os"
+    "net/url"
     "path/filepath"
     "io/ioutil"
     "encoding/json"
@@ -19,6 +20,7 @@ import (
     "net/http"
     "html/template"
     "sort"
+    . "github.com/gorilla/feeds"
 )
 
 const VERSION = "0.0.1"
@@ -27,6 +29,23 @@ const VERSION = "0.0.1"
 type FileInfo struct {
     FullPath string
     Stat     os.FileInfo
+}
+
+// Basic website information
+var websiteConfig struct {
+    Title        string
+    Url          string
+    Description  string
+    Domain       string
+    PortNumber   int
+    PublicDir    string
+    TemplateDir  string
+    DateFormat   string
+    Ext          string
+    Encode       string
+    NotFound     string
+    Rss          []string
+    IsProduction bool
 }
 
 // Page struct.
@@ -71,19 +90,6 @@ func (page *Page) Sort() {
     default:
         sort.Sort(IndexByDateDesc(page.IndexPages))
     }
-}
-
-// Basic website information
-var websiteConfig struct {
-    Domain       string
-    PortNumber   int
-    PublicDir    string
-    TemplateDir  string
-    DateFormat   string
-    Ext          string
-    Encode       string
-    NotFound     string
-    IsProduction bool
 }
 
 // Read config file and start server
@@ -207,6 +213,44 @@ func responseMarkdownFile(w http.ResponseWriter, r *http.Request) error {
     return nil
 }
 
+func responseRssFile(w http.ResponseWriter, r *http.Request) error {
+    page := Page{
+        Title: "RSS",
+    }
+
+    feed := &Feed{
+        Title:       websiteConfig.Title,
+        Link:        &Link{Href: websiteConfig.Url},
+        Description: websiteConfig.Description,
+        Created:     time.Now(),
+    }
+
+    getIndexFiles(&page, r.RequestURI)
+
+    feed.Items = []*Item{}
+
+    for i, content := range page.IndexPages {
+        feed.Items = append(feed.Items, &Item{
+            Title:       content.Title,
+            Link:        &Link{Href: content.Url},
+            Description: content.Params["description"],
+            Author:      &Author{content.Params["author"], ""},
+            Created:     content.Date,
+            Id:          content.Url,
+        })
+
+        if i == 10 {
+            break
+        }
+    }
+
+    rss, _ := feed.ToRss()
+
+    server.ContentRss(w, r, rss, time.Now())
+
+    return nil
+}
+
 func readDirListAndAppend(dir string) []string {
   var files []string
 
@@ -234,13 +278,15 @@ func readDirListAndAppend(dir string) []string {
 func getIndexFiles(page *Page, requestURI string) {
     // check if is index path
     files := readDirListAndAppend( paths.IndexPath(requestURI) )
+    contentUrl, _ := url.Parse(websiteConfig.Url)
 
     for _, markdownPath := range files {
+        contentUrl.Path = paths.Page(markdownPath)
+
         relatedPage := markdown.PageInfo(markdownPath)
-        relatedPage.Url = paths.Page(markdownPath)
+        relatedPage.Url = contentUrl.String()
         page.IndexPages = append(page.IndexPages, relatedPage)
     }
 
     page.Sort()
 }
-
