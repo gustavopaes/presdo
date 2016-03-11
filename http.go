@@ -67,7 +67,14 @@ func (s *ServerStruct) request(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *ServerStruct) NotFound(w http.ResponseWriter, r *http.Request) {
-    http.Redirect(w, r, "/" + websiteConfig.NotFound, 302)
+    //http.Redirect(w, r, "/" + websiteConfig.NotFound, 302)
+    w.Header().Add("Content-Type", "text/html")
+    w.WriteHeader(http.StatusNotFound)
+
+    markdownPath := paths.Markdown("404.md")
+    page := markdown.PageInfo(markdownPath)
+
+    w.Write([]byte(page.HTML()))
 }
 
 // Send to client some static file
